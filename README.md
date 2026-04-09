@@ -11,7 +11,8 @@ This repository contains best practices, design patterns, and implementation exa
 
 - Design patterns for resilience
 - Circuit breaker implementations
-- Load Balancer (todo)
+- Load Balancer - Round Robin implemented
+- Loggers 
 - Consumer as a buffer for db writes(todo)
 - Retry mechanisms (todo)
 - Timeout strategies (todo)
