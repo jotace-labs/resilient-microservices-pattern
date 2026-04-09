@@ -12,6 +12,7 @@ This repository contains best practices, design patterns, and implementation exa
 - Design patterns for resilience
 - Circuit breaker implementations
 - Load Balancer (todo)
+- Consumer as a buffer for db writes(todo)
 - Retry mechanisms (todo)
 - Timeout strategies (todo)
 - Graceful degradation examples (todo)
@@ -25,5 +26,9 @@ This repository contains best practices, design patterns, and implementation exa
 Browse the directories to find patterns relevant to your microservices challenges.
 
 ---
+
+## Sources
+
+- [Resilient microservices](https://tskulbru.dev/posts/building-resilient-microservices-k8s-circuit-breakers-retries-chaos-engineering/)
 
 **Contributions welcome!**
