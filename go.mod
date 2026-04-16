@@ -1,4 +1,4 @@
-module github.com/joseCarlosAndrade/resilient-microservices-pattern
+module github.com/jotace-labs/resilient-microservices-pattern
 
 go 1.26.1
 
