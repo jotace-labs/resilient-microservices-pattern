@@ -20,7 +20,10 @@ The servers have a 40% chance of replying with Not Ok for the `/readyz` endpoint
   - also instrument them
   
 
-## Instrumentating
+## Instrumenting
+
+todo:
+  - generate metrics to get server specific info like how many requests each service hadled, average latency for each server, etc
 
 ### Prometheus
 
