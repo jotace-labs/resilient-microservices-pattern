@@ -15,7 +15,7 @@ import (
 	"sync/atomic"
 	
 
-	"github.com/joseCarlosAndrade/resilient-microservices-pattern/loadbalancer"
+	"github.com/jotace-labs/resilient-microservices-pattern/loadbalancer"
 )
 
 var (
@@ -108,7 +108,7 @@ func Load(targetList []string, endpointList []string, duration time.Duration, wo
 			defer wg.Done()
 			for {
 				select {
-				case <-ctx:
+				case <-ctx: // end of timer
 					return
 				default:
 					if 	rps > 0 {

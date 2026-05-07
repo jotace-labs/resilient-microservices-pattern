@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	cb "github.com/joseCarlosAndrade/resilient-microservices-pattern/circuitbreaker"
+	cb "github.com/jotace-labs/resilient-microservices-pattern/circuitbreaker"
 )
 
 type CustomService struct {
