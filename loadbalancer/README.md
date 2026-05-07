@@ -1,6 +1,16 @@
 # Load Balancer
 
-Using simple round-robin algorithm to balance load across pre-defined static backends. Test it with:
+Using simple round-robin algorithm to balance load across pre-defined static backends
+
+## Running
+
+```bash
+go run cmd/main.go # generate three servers and apply load balancing
+go run cmd/main.go -loader=true # start load script to charge with requests
+
+```
+
+. Test it with:
 
 ```bash
 curl localhost:8000
