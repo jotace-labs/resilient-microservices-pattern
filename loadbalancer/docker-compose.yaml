@@ -2,8 +2,6 @@
 version: '3'
 
 volumes:
-  prometheus-data:
-    driver: local
   grafana-data:
     driver: local
 
@@ -14,11 +12,14 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /etc/prometheus:/config
-      - prometheus-data:/prometheus # left is host path, right is container path
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+      # - prometheus:/prometheus # left is host path, right is container path
     restart: unless-stopped
-    command:
-      - "--config.file=/config/prometheus.yml"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # allows prometheus to access the load balancer running on the host machine
+    # network_mode: "host"
+    command:  
+      - "--config.file=/etc/prometheus/prometheus.yaml"
   
 
   grafana:
@@ -27,5 +28,11 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - ./grafana/grafana.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
+    # network_mode: "host"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+

@@ -18,6 +18,6 @@ func _Lb() {
 
 	time.Sleep(1*time.Second)
 
-	sp := loadbalancer.NewServerPool("http://localhost:3000", "http://localhost:4000", "http://localhost:5000")
+	sp := loadbalancer.NewServerPool("http://localhost:3001", "http://localhost:4000", "http://localhost:5000")
 	sp.StartServer(context.Background(), 8080)
 }

@@ -13,6 +13,10 @@ func startTestServer(port int, name string) {
 
 	// /user endpoint - returns 200 OK with a server name
 	mux.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		if rand.Float64() < 0.2 { // 20% chance of taking a long time
+				time.Sleep(time.Duration((rand.Int()%3+1)) * time.Second)
+		}
+		
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "Hello from %s on port %d\n", name, port)
 	})
@@ -20,6 +24,7 @@ func startTestServer(port int, name string) {
 	// /readyz endpoint - returns 200 OK 60% of the time
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		if rand.Float64() < 0.6 {
+			
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "Ready\n")
 		} else {
@@ -39,7 +44,7 @@ func StartServers() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Start three servers in goroutines
-	go startTestServer(3000, "Server-A")
+	go startTestServer(3001, "Server-A")
 	go startTestServer(4000, "Server-B")
 	go startTestServer(5000, "Server-C")
 

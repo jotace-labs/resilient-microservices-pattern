@@ -10,12 +10,43 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// todo
+// 
 /*
 https://kasvith.me/posts/lets-create-a-simple-lb-go/
 */
+
+// instrumenting
+var (
+	// HttpRequestDuration counts total requests with: path, method and status_code
+	HttpRequestTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name : "api_http_request_total",
+		Help : "Total number of HTTP requests",
+	}, []string{"path", "method", "status_code"})
+
+	// HttpRequestErrorTotal counts total errors with: path, method and status_code
+	HttpRequestErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name : "api_http_request_error_total",
+		Help : "Total number of HTTP request errors",
+	}, []string{"path", "method", "status_code"})
+
+	HttpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name : "api_http_request_duration_seconds",
+		Help : "Duration of HTTP requests in seconds",
+	}, []string{"path", "method", "status_code"})
+)
+
+var customRegistry = prometheus.NewRegistry()
+
+func init() {
+	customRegistry.MustRegister(HttpRequestTotal)
+	customRegistry.MustRegister(HttpRequestErrorTotal)
+	customRegistry.MustRegister(HttpRequestDuration)
+}
 
 type Backend struct {
 	id           int
@@ -128,10 +159,69 @@ func (s *ServerPool) LbHandler() func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func PrometheusHandler() http.Handler {
+	h := promhttp.HandlerFor(customRegistry, promhttp.HandlerOpts{})
+	// return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	h.ServeHTTP(w, r)
+	// })
+
+
+	return h
+}
+
+// intercept call to writer so we can get response data
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// pasing the default w so we dont have to implement all methods from http.ResponseWritter interface
+func NewResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{w, http.StatusOK}
+}
+
+// overriding only writeheader so we can access it
+func (rw * responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func RequestMetricsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("handling request")
+		start := time.Now()
+		method := r.Method
+		path := r.URL.Path
+
+		rw := NewResponseWriter(w)
+		
+		next.ServeHTTP(rw, r)
+		status := rw.statusCode
+		duration := time.Since(start).Seconds()
+		// log.Println("finished handling request", path, method, status, duration)
+
+		// Update Prometheus metrics
+		HttpRequestTotal.WithLabelValues(path, method, fmt.Sprintf("%d", status)).Inc()
+		HttpRequestDuration.WithLabelValues(path, method, fmt.Sprintf("%d", status)).Observe(duration)
+
+		if status >= 400 {
+			HttpRequestErrorTotal.WithLabelValues(path, method, fmt.Sprintf("%d", status)).Inc()
+		}
+	})
+}
+
 func (s *ServerPool) StartServer(ctx context.Context, port int) {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", PrometheusHandler())
+	mux.Handle("/", RequestMetricsMiddleware(http.HandlerFunc(s.LbHandler()))) // wraps routing in metrics middleware
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "{ \"message\" : \"OK\"}\n")
+	})
+
 	server := http.Server{
-		Addr: fmt.Sprintf(":%d", port),
-		Handler: http.HandlerFunc(s.LbHandler()),
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: mux,
 	}
 
 	go s.startHealthCheck(ctx)
